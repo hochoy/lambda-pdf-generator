@@ -5,7 +5,7 @@ Generates pdf reports from Postgres and Googlesheet data via AWS Lambda
 0. Setting up the workspace: Git, Node, Code-editor
 1. Starting a Node project
 2. Connecting to a Postgres database
-  - Connecting to AWS RDS databases
+  - Connecting to AWS RDS databases (TODO)
 3. Connecting to GoogleDrive and GoogleSheets
   - [Creating a service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts)
   - [Using a service account](https://cloud.google.com/iam/docs/understanding-service-accounts)
@@ -21,7 +21,15 @@ Generates pdf reports from Postgres and Googlesheet data via AWS Lambda
 
 Bonus: Creating pdf from html/pages using [Puppeteer](https://github.com/GoogleChrome/puppeteer)
 Bonus: Connecting to other google cloud services with node [Google Cloud pkgs](https://cloud.google.com/nodejs/docs/reference/libraries)
-
+Creating pdfs/docs:
+  1. Filling forms: https://www.npmjs.com/package/node-pdftk - based of this: https://www.pdflabs.com/tools/pdftk-server/
+  2. Create from html (react) https://dev.to/carlbarrdahl/generating-pdf-reports-with-charts-using-react-and-puppeteer-4245
+  3. Draw anything from scratch https://www.npmjs.com/package/pdfkit
+  4. Wrapper around pdfkit: http://pdfmake.org/playground.html
+  5. Create ppt, word, excel https://www.npmjs.com/package/officegen
+  6. Primitive parser, generator by mozilla https://www.npmjs.com/package/pdfjs-dist
+  7. docx/ppt => docx/ppt https://www.npmjs.com/package/docxtemplater
+  8. CURRENT: CARBONE https://github.com/Ideolys/carbone
 
 ## Setting up a local pg database
 
