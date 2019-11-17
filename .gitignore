@@ -4,3 +4,9 @@
 logfile
 node_modules/
 node_modules/*
+
+credentials/*
+credentials/
+
+.DS_Store
+.vscode
