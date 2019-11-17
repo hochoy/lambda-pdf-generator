@@ -12,26 +12,24 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-pool
+main().catch(console.error);
+
+// Main function
+async function main() {
+
+  // query a database via pg-pool
+  pool
   .query('SELECT * FROM customers;')
   .then(res => console.log(`Database sample: ${JSON.stringify(res.rows, null, 2)}`))
   .catch(e => {
     console.error(e)
     throw new Error(e)
   })
-  .finally(() => {
-    pool.end()
-    // process.exit()
-  })
-
-main().catch(console.error);
-
-// Get data
-async function main() {
+  .finally(() => pool.end())
 
   // connect to google drive
   const gKeyFile = path.join(__dirname, 'credentials', 'lambda-project-001-1a2f5773dd4f.json');
-  const gClient = await gAuthClient(gKeyFile).catch(console.error);
+  const gClient = await gAuthClient(gKeyFile);
   const gDrive = await gDriveClient(gClient);
   const gSheet = await gSheetClient(gClient);
 
@@ -79,8 +77,8 @@ async function gAuthClient(keyFile) {
     // https://developers.google.com/identity/protocols/googlescopes#drivev3
     // https://developers.google.com/identity/protocols/googlescopes#sheetsv4
     scopes: [
-      // 'https://www.googleapis.com/auth/spreadsheets',
-      'https://www.googleapis.com/auth/drive',
+      // 'https://www.googleapis.com/auth/spreadsheets', // drive permissions is a superset of spreadsheets
+      'https://www.googleapis.com/auth/drive', 
     ]
   });
   const client = await auth.getClient();
