@@ -8,7 +8,9 @@ Generates pdf reports from Postgres and Googlesheet data via AWS Lambda
   - [Creating a service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts)
   - [Using a service account](https://cloud.google.com/iam/docs/understanding-service-accounts)
   - [Connecting to Google sheets via `googleapis`](https://github.com/googleapis/google-api-nodejs-client/blob/168ad6ba5c10f798cf63daa101a19c50f12389bc/samples/jwt.js) Link may change but what we want to find is JWT authentication for service account
-  
+  - [Official way to authenticate with Google API (new?)](https://github.com/googleapis/google-auth-library-nodejs)
+  - [Selecting specific sheets and cells in GSheet API](https://developers.google.com/sheets/api/guides/concepts#a1_notation)
+
 3. Lambda/NodeJS - Writing JSON data into an .odt file
 4. Lambda/NodeJS - Running Libreoffice on a Lambda instance
 5. Lambda/NodeJS - Zipping and Encrypting files with 7zip
