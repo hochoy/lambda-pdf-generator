@@ -3,6 +3,10 @@ const { Pool } = require('pg');
 const { google } = require('googleapis');
 const path = require('path');
 const _ = require('lodash');
+const carbone = require('carbone');
+const { promisify } = require('util');
+const moment = require('moment');
+const { writeFileSync } = require('fs');
 
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -10,6 +14,9 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PWD,
   port: process.env.DB_PORT,
+  max: 20, // max number of connections in pool
+  idleTimeoutMillis: 10000, // max time to keep client connected idly, before timing out
+  connectionTimeoutMillis: 5000, // max time for client to connect, else timeout
 });
 
 main().catch(console.error);
@@ -18,6 +25,8 @@ main().catch(console.error);
 async function main() {
 
   // query a database via pg-pool
+  // using pool.query directly will release the connection once query returns/fails
+  // using pool.connect().then(client => client.query()) will not release the connection until told to
   pool
   .query('SELECT * FROM customers;')
   .then(res => console.log(`Database sample: ${JSON.stringify(res.rows, null, 2)}`))
@@ -25,7 +34,6 @@ async function main() {
     console.error(e)
     throw new Error(e)
   })
-  .finally(() => pool.end())
 
   // connect to google drive
   const gKeyFile = path.join(__dirname, 'credentials', 'lambda-project-001-1a2f5773dd4f.json');
@@ -46,11 +54,10 @@ async function main() {
       ]
   });
 
+  // Reshape google sheet data as array of objects
   const gSheetRawData = gSheetResponse.data.valueRanges[0].values;
-
-  const gSheetColNames = gSheetRawData[0];
+  const gSheetColNames = gSheetRawData[0].map(v => v.toLowerCase());
   const gSheetRows = gSheetRawData.slice(1);
-
   const gSheetShaped = gSheetRows.map(row => {
     let obj = {};
     // obj[gSheetColNames[0]] = row[0] // Warehouse
@@ -59,12 +66,31 @@ async function main() {
     // obj[gSheetColNames[3]] = row[3] // Quantity
     // obj[gSheetColNames[4]] = row[4] // Unit
     for (let i=0; i < row.length; i++){
-      obj[gSheetColNames[i]] = row[i]
+      const colName = gSheetColNames[i];
+      obj[colName] = row[i]
     }
     return obj;
   })
-  
   console.log(`Gsheet sample: ${JSON.stringify(gSheetShaped, null, 2)}`)
+
+  // Get google sheet as array of columns
+  const warehouses = gSheetShaped.map(w => w.warehouse);
+  const produce = gSheetShaped.map(w => w.produce);
+  const date = gSheetShaped.map(w => w.date);
+  const quantity = gSheetShaped.map(w => w.quantity);
+  const unit = gSheetShaped.map(w => w.unit);
+  const gSheetColArray = [];
+
+  // Write data to a template .odt file
+  writeOdtFromTemplate(
+    { 
+      author: 'Prince Ali',
+      currentDate: moment().format('YYYY-MM-DD'),
+      warehouse: gSheetShaped
+    },
+    path.join(__dirname, 'templates','odt_template_2.odt'),
+    path.join(__dirname,'tmp','odt_w_data.odt'))
+
 }
 
 
@@ -103,5 +129,24 @@ async function gSheetClient(gClient){
   return sheets;
 }
 
-
+const writeOdtFromTemplate = async function(data, templatePath, outputPath){
   
+  try {
+      if (!/.*\.odt/.test(outputPath)) {
+        throw new Error('Output filename should include .odt file extension');
+      }
+      console.log("\nWriting odt file with data to "+ outputPath + "...");
+
+      const odtRender = promisify(carbone.render);
+      const odtResult = await odtRender(templatePath, data);
+      writeFileSync(outputPath, odtResult);
+      console.log("ODT file written")
+
+      return({
+          outputPath
+      })
+  }
+  catch(err){
+      throw new Error(`ODT file creation failed: ${err.message}`)
+  }
+}

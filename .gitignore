@@ -10,3 +10,7 @@ credentials/
 
 .DS_Store
 .vscode
+
+tmp/
+tmp/*
+

@@ -14,6 +14,7 @@ Generates pdf reports from Postgres and Googlesheet data via AWS Lambda
   - [Selecting specific sheets and cells in GSheet API](https://developers.google.com/sheets/api/guides/concepts#a1_notation)
 
 4. Writing JSON data into an .odt file
+  -- carbone moustache-like substitutions, etc https://carbone.io/documentation.html
 5. Running Libreoffice on a Lambda instance
 6. Zipping and Encrypting files with 7zip
 7. Uploading files to GoogleDrive
