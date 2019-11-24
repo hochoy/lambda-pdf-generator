@@ -14,8 +14,11 @@ Generates pdf reports from Postgres and Googlesheet data via AWS Lambda
   - [Selecting specific sheets and cells in GSheet API](https://developers.google.com/sheets/api/guides/concepts#a1_notation)
 
 4. Writing JSON data into an .odt file
-  -- carbone moustache-like substitutions, etc https://carbone.io/documentation.html
+  - carbone moustache-like substitutions, etc https://carbone.io/documentation.html
 5. Running Libreoffice on a Lambda instance
+  - [Step-by-step to upload Libreoffice to s3, have lambda download/run it to convert files/do other libreoffice stuff](https://github.com/vladgolubev/serverless-libreoffice/blob/master/STEP_BY_STEP.md)
+  - The idea of hosting software in S3 for later retrieval is useful when we can't/don't want to place large binaries/libraries in our Lambda instance. There is a limit however to the max size of files that we download onto a lambda instance (currently 512mb). Also, because the lambda instance has to download the instance from S3, it will increase the amount of runtime. If we want to run software that is hundreds of megabytes in size, we could have lambda send requests/messages/data to a larger docker/ec2 instance for processing.
+
 6. Zipping and Encrypting files with 7zip
 7. Uploading files to GoogleDrive
 8. Invoking multiple lambda(s) with AWS-SDK + CRON scheduling
