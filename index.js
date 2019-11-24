@@ -58,28 +58,19 @@ async function main() {
   const gSheetRawData = gSheetResponse.data.valueRanges[0].values;
   const gSheetColNames = gSheetRawData[0].map(v => v.toLowerCase());
   const gSheetRows = gSheetRawData.slice(1);
-  const gSheetShaped = gSheetRows.map(row => {
-    let obj = {};
-    // obj[gSheetColNames[0]] = row[0] // Warehouse
-    // obj[gSheetColNames[1]] = row[1] // Produce
-    // obj[gSheetColNames[2]] = row[2] // Date
-    // obj[gSheetColNames[3]] = row[3] // Quantity
-    // obj[gSheetColNames[4]] = row[4] // Unit
-    for (let i=0; i < row.length; i++){
-      const colName = gSheetColNames[i];
-      obj[colName] = row[i]
-    }
-    return obj;
-  })
-  console.log(`Gsheet sample: ${JSON.stringify(gSheetShaped, null, 2)}`)
 
-  // Get google sheet as array of columns
-  const warehouses = gSheetShaped.map(w => w.warehouse);
-  const produce = gSheetShaped.map(w => w.produce);
-  const date = gSheetShaped.map(w => w.date);
-  const quantity = gSheetShaped.map(w => w.quantity);
-  const unit = gSheetShaped.map(w => w.unit);
-  const gSheetColArray = [];
+  const gSheetShaped = gSheetRows.map(row => {
+    // convert row from array => object
+    const rowObject = gSheetColNames.reduce((obj, curr,i) => {
+      // Assign each colname as the object's key
+      // Assign each corresponding row[i] value as the object's value
+      obj[curr] = row[i]
+      return obj;
+    },{})
+    return rowObject;
+  })
+
+  console.log(`Gsheet sample: ${JSON.stringify(gSheetShaped, null, 2)}`)
 
   // Write data to a template .odt file
   writeOdtFromTemplate(
@@ -88,7 +79,7 @@ async function main() {
       currentDate: moment().format('YYYY-MM-DD'),
       warehouse: gSheetShaped
     },
-    path.join(__dirname, 'templates','odt_template_2.odt'),
+    path.join(__dirname, 'templates','odt_template_1.odt'),
     path.join(__dirname,'tmp','odt_w_data.odt'))
 
 }
