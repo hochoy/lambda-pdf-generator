@@ -18,9 +18,21 @@ Generates pdf reports from Postgres and Googlesheet data via AWS Lambda
 5. Running Libreoffice on a Lambda instance
   - [Step-by-step to upload Libreoffice to s3, have lambda download/run it to convert files/do other libreoffice stuff](https://github.com/vladgolubev/serverless-libreoffice/blob/master/STEP_BY_STEP.md)
   - The idea of hosting software in S3 for later retrieval is useful when we can't/don't want to place large binaries/libraries in our Lambda instance. There is a limit however to the max size of files that we download onto a lambda instance (currently 512mb). Also, because the lambda instance has to download the instance from S3, it will increase the amount of runtime. If we want to run software that is hundreds of megabytes in size, we could have lambda send requests/messages/data to a larger docker/ec2 instance for processing.
+5. Compiling binaries/software on Amazon Linux 2 for Lambda
+- Docker image: https://hub.docker.com/_/amazonlinux/
+- Lambda runtimes: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+- Create docker image from EC2 AMI: https://stackoverflow.com/questions/29324133/create-a-docker-image-container-from-ec2-ami
+- use a 3rd-party lambda simulator docker: https://github.com/lambci/docker-lambda built by tarring the entire lambda filesystem => upload to s3 => build docker image : https://github.com/lambci/docker-lambda#questions
+- similar to abovwe: http://steveadams.io/2016/08/03/AMI-to-Docker.html
+
+
 
 6. Zipping and Encrypting files with 7zip
+- https://www.ibm.com/developerworks/community/blogs/6e6f6d1b-95c3-46df-8a26-b7efd8ee4b57/entry/how_to_use_7zip_on_linux_command_line144?lang=en
+
 7. Uploading files to GoogleDrive
+8. Uploading intermediate files to S3
+- https://stackabuse.com/uploading-files-to-aws-s3-with-node-js/
 8. Invoking multiple lambda(s) with AWS-SDK + CRON scheduling
 
 Bonus: Creating pdf from html/pages using [Puppeteer](https://github.com/GoogleChrome/puppeteer)
