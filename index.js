@@ -100,13 +100,32 @@ exports.handler = async function(event, context) {
 
 
   // Upload file to GoogleDrive
-  // const uploadResult = await uploadToGoogle(googleDrive,outputPath,'application/pdf','1plA69VMEqNfdotYO5j4cKoHZlbIjmfsE');
-  const getResult = await getGoogleFile(googleDrive,'1fW-rvsHFoUs5R687BLMoItELvBA8KL0T');
+  const uploadResult = await uploadToGoogle(outputPath, googleDrive,'1plA69VMEqNfdotYO5j4cKoHZlbIjmfsE', `Report_${moment().format('YYYY-MM-DD')}`,'application/pdf',);
 
   // Upload file to S3 (requires AWS S3 permissions)
+  const AWS = require('aws-sdk');
+  // Not required in Lambda, use AWS role instead
+  const awsID = '<AWS_ID>';
+  const awsSecret = '<AWS_SECRET>';
+  const s3 = new AWS.S3({
+    accessKeyId: awsID,
+    secretAccessKey: awsSecret
+  })
+  const S3BucketName = '<BUCKET_NAME>';
+  const fileContent = fs.readFileSync(outputPath);
+  
+  const s3Params = {
+    Bucket: S3BucketName,
+    Key: `Warehouse_Report_${moment().format('YYYY-MM-DD')}`,
+    Body: fileContent
+  };
 
+  const s3Result = await s3.upload(s3Params).catch(err => {console.log(err)})
 
-  return getResult;
+  return {
+    s3Result,
+    uploadResult,
+  }
 }
 
 async function writeOdtFromTemplate(data, templatePath, outputPath){
@@ -128,34 +147,25 @@ async function writeOdtFromTemplate(data, templatePath, outputPath){
   }
 }
 
-async function setupLibreOffice(
-  s3Host = 'https://s3.ca-central-1.amazonaws.com/davidchoy.libreoffice/lo.tar.gz',
-  setupPath = '/tmp'
-) {
-  // if (!/lo.tar.gz/.test(s3Host)) {
-  //   throw new Error('ERR: Please provide file named lo.tar.gz from https://github.com/vladgolubev/serverless-libreoffice/releases')
-  // }
-  // if (!/^\/tmp\/?$/.test(setupPath)) {
-  //   console.warn('WARN: Expecting the setup path to be /tmp as AWS Lambda only allows tmp to be writable')
-  // }
-
-  // if LibreOffice is not in the tmp folder, download and extract it into tmp folder
+async function setupLibreOffice(s3Host = 'https://s3.ca-central-1.amazonaws.com/davidchoy.libreoffice/lo.tar.gz',setupPath = '/tmp') {
+  
   const libreofficeExePath = path.join(setupPath, '/instdir/program/soffice');
 
-if (!fs.existsSync(libreofficeExePath)){
-    console.log('setupLibreOffice', 'Downloading libreoffice');
-    try {
-        execSync(`curl ${s3Host} -o ${setupPath}/lo.tar.gz && cd ${setupPath} && tar -xf ${setupPath}/lo.tar.gz`);
-        console.log('setupLibreOffice', 'Downloaded and extracted libreoffice');
+  // if LibreOffice is not in the tmp folder, download and extract it into tmp folder
+  if (!fs.existsSync(libreofficeExePath)){
+      console.log('setupLibreOffice', 'Downloading libreoffice');
+      try {
+          execSync(`curl ${s3Host} -o ${setupPath}/lo.tar.gz && cd ${setupPath} && tar -xf ${setupPath}/lo.tar.gz`);
+          console.log('setupLibreOffice', 'Downloaded and extracted libreoffice');
+          return libreofficeExePath;
+      }
+      catch(err){
+          throw new Error(`setupLibreOffice failed: Could not download libreoffice from ${s3Host}: ${err.stack}`);
+      }
+    } else {
+        console.log('setupLibreOffice', 'Libreoffice already installed in this lambda instance');
         return libreofficeExePath;
     }
-    catch(err){
-        throw new Error(`setupLibreOffice failed: Could not download libreoffice from ${s3Host}: ${err.stack}`);
-    }
-  } else {
-      console.log('setupLibreOffice', 'Libreoffice already installed in this lambda instance');
-      return libreofficeExePath;
-  }
 }
 
 async function convertOdtToPdf(libreofficeExePath, odtPath){
@@ -193,21 +203,22 @@ async function convertOdtToPdf(libreofficeExePath, odtPath){
 // official guide, easy: https://developers.google.com/drive/api/v3/quickstart/nodejs
 //https://github.com/googleapis/google-api-nodejs-client/tree/master/samples/drive
 
-async function uploadToGoogle(gDriveClient, filePath, fileType = 'application/pdf', googleFolderId) {
+async function uploadToGoogle(filePath, gDriveClient, googleFolderId, googleFileName, googleFileType = 'application/pdf') {
 
+  console.log(`uploading ${filePath} to google drive as ${googleFileName} with format ${googleFileType}...`)
   try {
     const response = await gDriveClient.files.create({
       requestBody: {
-        name: 'haha',
-        mimeType: 'application/pdf',
+        name: googleFileName,
+        mimeType: googleFileType,
         parents: [googleFolderId]
       },
       media: {
-        mimeType: fileType,
+        mimeType: googleFileType,
         body: fs.createReadStream(filePath)
       }
     });
-
+    console.log(`upload success!`)
     return response.data;
   } catch (err) {
     throw new Error(`uploadToGoogle: ${err.stack}`)
@@ -233,33 +244,6 @@ async function updateGoogleFile(gDriveClient, filePath, fileType = 'application/
     throw new Error(`updateGoogleFile: ${err.stack}`);
   }
 }
-
-async function getGoogleFile(gDriveClient, gFileId) {
-  try {
-    const response = await gDriveClient.files.get({
-      fileId: gFileId
-    });
-    
-    // EXAMPLE to write stream: https://github.com/googleapis/google-api-nodejs-client/blob/master/samples/drive/download.js
-    return response.data;
-  } catch (err) {
-    throw new Error(`getGoogleFile: ${err.stack}`);
-  }
-}
-
-async function listGoogleFiles(gDriveClient) {
-  // https://github.com/googleapis/google-api-nodejs-client/blob/master/samples/drive/quickstart.js
-  // https://github.com/googleapis/google-api-nodejs-client/blob/master/samples/drive/list.js
-}
-
-async function exportGoogleFile(gDriveClient, outputType, outputPath) {
-  // drive.files.export: https://github.com/googleapis/google-api-nodejs-client/issues/963#issuecomment-367671749
-  // as per issue, these are the types of data format that can be returned:
-  // googledrive on nodejs uses axios (an awesome http client) with these data-return options:
-  // 'arraybuffer', 'document', 'json', 'text', 'stream', browser only: 'blob'
-  // https://github.com/axios/axios#request-config
-}
-
 
 //// Call the main handler function. This is what AWS Lambda calls + the imports above the handler() definition
 exports.handler()
