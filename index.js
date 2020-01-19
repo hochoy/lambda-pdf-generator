@@ -10,6 +10,8 @@ const { writeFileSync } = require('fs');
 const { execSync } = require('child_process');
 const fs = require('fs');
 
+
+
 const pool = new Pool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -88,19 +90,18 @@ exports.handler = async function(event, context) {
     odtPath,
   );
 
-  //// BROKEN: Convert file using minified LibreOffice
-  //// NOTE: The current binary won't work on a mac as it was built on a Linux-based AMI for Lambda
-  //// NOTE: The current binary MIGHT also not work on AWS Lambda due to new updates in Lambda
-  //// NOTE: The current binary needs to be re-hosted on my personal AWS S3/Github. The existing link points to an older S3 link.
-  //// SOLUTION 1: Test on AWS Lambda/Docker with similar environment since it was built for it
-  //// SOLUTION 2: RE-COMPILING IN DESIRED ENVIRONMENT VIA DOCKER: https://github.com/vladgolubev/serverless-libreoffice/pull/22
-  // const libreOfficeExePath = await setupLibreOffice('https://s3.ca-central-1.amazonaws.com/davidchoy.libreoffice/lo.tar.gz','/tmp');
-  // const pdfPath = await convertOdtToPdf(libreOfficeExePath, odtPath);  
-  // return pdfPath;
+  // Convert file using LibreOffice
+  // Download minified Libreoffice at https://github.com/vladgolubev/serverless-libreoffice/releases
+  // Place the lo.tar.gz compressed file in an S3 bucket and allow access from lambda function
+  // You can either set the S3 bucket permissions as publicly-accessible (read-only), 
+  // or grant permissions to the lambda role specifically for the s3 bucket.
 
+  const libreofficePath = 'https://s3.ca-central-1.amazonaws.com/hochoy.libreoffice/lo.tar.gz';
+  const libreOfficeExePath = await setupLibreOffice(libreofficePath,'/tmp');
+  const pdfPath = await convertOdtToPdf(libreOfficeExePath, odtPath);  
 
   // Upload file to GoogleDrive
-  const uploadResult = await uploadToGoogle(outputPath, googleDrive,'1plA69VMEqNfdotYO5j4cKoHZlbIjmfsE', `Report_${moment().format('YYYY-MM-DD')}`,'application/pdf',);
+  const uploadResult = await uploadToGoogle(pdfPath, googleDrive,'1plA69VMEqNfdotYO5j4cKoHZlbIjmfsE', `Report_${moment().format('YYYY-MM-DD')}`,'application/pdf',);
 
   // Upload file to S3 (requires AWS S3 permissions)
   const AWS = require('aws-sdk');
@@ -189,7 +190,7 @@ async function convertOdtToPdf(libreofficeExePath, odtPath){
   try {
     // run command on file
     console.log('convertOdtToPdf: ', 'Converting file to pdf');
-    execSync(`cd ${outputDir} && ${convertCommand} ${odtPath}`);
+    execSync(`${convertCommand} ${odtPath}`);
     
     const pdfPath = odtPath.replace('.odt','.pdf');
     console.log(`convertOdtToPdf: Success: ${odtPath} converted to ${pdfPath}`);
