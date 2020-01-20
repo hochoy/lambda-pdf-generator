@@ -4,7 +4,7 @@
   "description": "Generate pdfs from .odt templates on AWS Lambda",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node run.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -25,5 +25,10 @@
     "moment": "^2.24.0",
     "pg": "^7.12.1",
     "yesql": "^3.2.2"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.20.0"
   }
 }

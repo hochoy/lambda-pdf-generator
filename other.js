@@ -23,3 +23,33 @@ export async function getGoogleFile(gDriveClient, gFileId) {
     throw new Error(`getGoogleFile: ${err.stack}`);
   }
 }
+
+export async function uploadToS3(filePath, S3BucketName, desiredFilename) {
+
+  const AWS = require('aws-sdk');
+
+  // The below are not required in Lambda.
+  // In lambda, we assign an IAM role to the Lambda function, which will allow the function to write to S3
+  // const AWSID = '<AWS_ID>';
+  // const AWSSecret = '<AWS_SECRET>';
+  // const S3 = new AWS.S3({
+  //   accessKeyId: AWSID,
+  //   secretAccessKey: AWSSecret
+  // })
+
+  const S3 = new AWS.S3()
+
+  const fileContent = fs.readFileSync(filePath);
+
+  const S3Params = {
+    Bucket: S3BucketName,
+    Key: desiredFilename,
+    Body: fileContent,
+  };
+
+  const S3Result = await S3
+    .upload(S3Params)
+    .catch(err => console.log(err));
+
+  return S3Result;
+}
