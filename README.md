@@ -1,6 +1,11 @@
 # Lambda PDF generator
 Generates pdf reports from Postgres and Googlesheet data via AWS Lambda
 
+**Purpose**: A proof-of-concept / potential tutorial, showing how to wire up AWS services (lambda, RDS, S3) and Google's API (Sheets, Service account) to generate PDF reports on-the-fly with AWS Lambda
+
+**Status**: The ODT -> PDF conversion hasn't been re-tested. It uses a minified Libreoffice to convert between doc formats.
+
+
 ## Contents
 0. Setting up the workspace: Git, Node, Code-editor
 1. Starting a Node project
