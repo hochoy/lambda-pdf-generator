@@ -1,4 +1,4 @@
-# pdf_report_generator
+# Lambda PDF generator
 Generates pdf reports from Postgres and Googlesheet data via AWS Lambda
 
 ## Contents
